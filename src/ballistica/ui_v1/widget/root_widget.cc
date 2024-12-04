@@ -3,6 +3,7 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
 
 #include "ballistica/base/app_mode/app_mode.h"
@@ -268,7 +269,23 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
       td.flatness = 1.0f;
       td.shadow = 1.0f;
       td.depth_min = 0.3f;
-      AddText_(td);
+      auto* text = AddText_(td);
+      switch (type) {
+        case MeterType::kTickets:
+          tickets_meter_text_ = text;
+          break;
+        case MeterType::kTokens:
+          tokens_meter_text_ = text;
+          break;
+        case MeterType::kTrophy:
+          league_rank_text_ = text;
+          break;
+        case MeterType::kLevel:
+          xp_text_ = text;
+          break;
+        default:
+          break;
+      }
     }
     // Icon on side.
     {
@@ -300,7 +317,13 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
           break;
       }
       imgd.depth_min = 0.3f;
-      AddImage_(imgd);
+      auto* img = AddImage_(imgd);
+      switch (type) {
+        case MeterType::kTrophy:
+          trophy_icon_ = img;
+        default:
+          break;
+      }
 
       // Level num.
       if (type == MeterType::kLevel) {
@@ -317,7 +340,7 @@ void RootWidget::AddMeter_(MeterType type, float h_align, float r, float g,
         td.color_r = 1.0f;
         td.color_g = 1.0f;
         td.color_b = 1.0f;
-        AddText_(td);
+        level_text_ = AddText_(td);
       }
     }
   }
@@ -500,8 +523,8 @@ void RootWidget::Setup() {
       account_name_text_ = AddText_(td);
     }
   }
-  AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "456/1000");
-  AddMeter_(MeterType::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "#123");
+  AddMeter_(MeterType::kLevel, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
+  AddMeter_(MeterType::kTrophy, 0.0f, 1.0f, 1.0f, 1.0f, false, "");
 
   // Menu button (only shows up when we're not in a menu)
   // FIXME - this should never be visible on TV or VR UI modes
@@ -579,8 +602,8 @@ void RootWidget::Setup() {
     }
   }
 
-  AddMeter_(MeterType::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "123");
-  AddMeter_(MeterType::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "12345");
+  AddMeter_(MeterType::kTokens, 1.0f, 1.0f, 1.0f, 1.0f, true, "");
+  AddMeter_(MeterType::kTickets, 1.0f, 1.0f, 1.0f, 1.0f, false, "");
 
   // Inbox button.
   {
@@ -632,7 +655,7 @@ void RootWidget::Setup() {
       TextDef td;
       td.button = achievements_button_;
       td.width = 26.0f;
-      td.text = "34%";
+      td.text = "";
       td.x = centerx;
       td.y = centery;
       td.scale = 0.6f;
@@ -642,7 +665,7 @@ void RootWidget::Setup() {
       td.color_r = 0.8f;
       td.color_g = 0.75f;
       td.color_b = 0.9f;
-      AddText_(td);
+      achievement_percent_text_ = AddText_(td);
     }
   }
 
@@ -1261,14 +1284,22 @@ auto RootWidget::GetSpecialWidget(const std::string& s) const -> Widget* {
 void RootWidget::SetAccountState(bool signed_in, const std::string& name) {
   if (account_name_text_) {
     auto* w{account_name_text_->widget.Get()};
+    auto* wb{account_button_->widget.Get()};
     assert(w);
+    assert(wb);
 
     if (signed_in) {
-      w->SetText(name);
-      w->set_color(0.0f, 1.0f, 0.0f, 1.0f);
+      w->SetText(g_base->assets->CharStr(SpecialChar::kV2Logo) + name);
+      w->set_color(0.0f, 0.4f, 0.1f, 1.0f);
+      w->set_shadow(0.2f);
+      w->set_flatness(1.0f);
+      wb->SetColor(0.8f, 1.2f, 0.8f);
     } else {
-      w->SetText("NOT SIGNED IN");
+      w->SetText("{\"r\":\"notSignedInText\"}");
       w->set_color(1.0f, 0.2f, 0.2f, 1.0f);
+      w->set_shadow(0.5f);
+      w->set_flatness(1.0f);
+      wb->SetColor(0.45f, 0.4f, 0.4f);
     }
   }
 }
@@ -1284,6 +1315,57 @@ void RootWidget::SetSquadSizeLabel(int val) {
       w->set_color(0.0f, 1.0f, 0.0f, 0.5f);
     }
   }
+}
+
+void RootWidget::SetTicketsMeterText(const std::string& val) {
+  assert(tickets_meter_text_);
+  tickets_meter_text_->widget->SetText(val);
+}
+
+void RootWidget::SetTokensMeterText(const std::string& val) {
+  assert(tokens_meter_text_);
+  tokens_meter_text_->widget->SetText(val);
+}
+
+void RootWidget::SetLeagueRankText(const std::string& val) {
+  assert(league_rank_text_);
+  league_rank_text_->widget->SetText(val);
+}
+
+void RootWidget::SetLeagueType(const std::string& val) {
+  Vector3f color{};
+
+  if (val == "") {
+    color = {0.4f, 0.4f, 0.4f};
+  } else if (val == "b") {
+    color = {1.0f, 0.7f, 0.5f};
+  } else if (val == "s") {
+    color = {1.0f, 1.0f, 1.4f};
+  } else if (val == "g") {
+    color = {1.4f, 1.0f, 0.4f};
+  } else if (val == "d") {
+    color = {1.0f, 0.8f, 2.0f};
+  } else {
+    g_core->Log(LogName::kBa, LogLevel::kError,
+                "RootWidget: Invalid league type '" + val + "'.");
+  }
+  assert(trophy_icon_);
+  trophy_icon_->widget->set_color(color.x, color.y, color.z);
+}
+
+void RootWidget::SetAchievementPercentText(const std::string& val) {
+  assert(achievement_percent_text_);
+  achievement_percent_text_->widget->SetText(val);
+}
+
+void RootWidget::SetLevelText(const std::string& val) {
+  assert(level_text_);
+  level_text_->widget->SetText(val);
+}
+
+void RootWidget::SetXPText(const std::string& val) {
+  assert(xp_text_);
+  xp_text_->widget->SetText(val);
 }
 
 }  // namespace ballistica::ui_v1

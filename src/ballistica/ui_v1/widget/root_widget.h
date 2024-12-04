@@ -39,6 +39,14 @@ class RootWidget : public ContainerWidget {
   void SetSquadSizeLabel(int val);
   void SetAccountState(bool signed_in, const std::string& name);
 
+  void SetTicketsMeterText(const std::string& val);
+  void SetTokensMeterText(const std::string& val);
+  void SetLeagueRankText(const std::string& val);
+  void SetLeagueType(const std::string& val);
+  void SetAchievementPercentText(const std::string& val);
+  void SetLevelText(const std::string& val);
+  void SetXPText(const std::string& val);
+
  private:
   struct ButtonDef;
   struct Button;
@@ -82,11 +90,16 @@ class RootWidget : public ContainerWidget {
   Button* inventory_button_{};
   Button* menu_button_{};
   Button* squad_button_{};
-  Button* level_icon_{};
   Button* level_meter_button_{};
-  Button* trophy_icon_{};
+  Image* trophy_icon_{};
   Text* squad_size_text_{};
   Text* account_name_text_{};
+  Text* tickets_meter_text_{};
+  Text* tokens_meter_text_{};
+  Text* league_rank_text_{};
+  Text* achievement_percent_text_{};
+  Text* level_text_{};
+  Text* xp_text_{};
 };
 
 }  // namespace ballistica::ui_v1

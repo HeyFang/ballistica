@@ -27,10 +27,12 @@
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/ui_v1/ui_v1.h"
+#include "ballistica/ui_v1/widget/root_widget.h"
 
 namespace ballistica::classic {
 
@@ -140,7 +142,20 @@ void ClassicAppMode::Reset_() {
 
   // Import UIV1 and wire it up for UI duty.
   if (!g_core->HeadlessMode()) {
-    g_base->ui->SetUIDelegate(ui_v1::UIV1FeatureSet::Import());
+    uiv1_ = ui_v1::UIV1FeatureSet::Import();
+    g_base->ui->SetUIDelegate(uiv1_);
+
+    // At this point uiv1 is in a reset-to-default state. Now plug in our
+    // current values for everything.
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetTicketsMeterText(root_ui_tickets_meter_text_);
+      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_);
+      root_widget->SetLeagueRankText(root_ui_league_rank_text_);
+      root_widget->SetLeagueType(root_ui_league_type_);
+      root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
+      root_widget->SetLevelText(root_ui_level_text_);
+      root_widget->SetXPText(root_ui_xp_text_);
+    }
   }
 
   // Fade in if we currently aren't.
@@ -1525,6 +1540,120 @@ void ClassicAppMode::RunMainMenu() {
           .Call();
   if (!result.Exists()) {
     throw Exception("Error running scene_v1 main menu.");
+  }
+}
+
+void ClassicAppMode::SetRootUITicketsMeterText(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_tickets_meter_text_) {
+    return;
+  }
+  // Store the value.
+  root_ui_tickets_meter_text_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetTicketsMeterText(root_ui_tickets_meter_text_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUITokensMeterText(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_tokens_meter_text_) {
+    return;
+  }
+  // Store the value.
+  root_ui_tokens_meter_text_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetTokensMeterText(root_ui_tokens_meter_text_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUILeagueRankText(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_league_rank_text_) {
+    return;
+  }
+  // Store the value.
+  root_ui_league_rank_text_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetLeagueRankText(root_ui_league_rank_text_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUILeagueType(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_league_type_) {
+    return;
+  }
+  // Store the value.
+  root_ui_league_type_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetLeagueType(root_ui_league_type_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUIAchievementsPercentText(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_achievement_percent_text_) {
+    return;
+  }
+  // Store the value.
+  root_ui_achievement_percent_text_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetAchievementPercentText(root_ui_achievement_percent_text_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUILevelText(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_level_text_) {
+    return;
+  }
+
+  // Store the value.
+  root_ui_level_text_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetLevelText(root_ui_level_text_);
+    }
+  }
+}
+
+void ClassicAppMode::SetRootUIXPText(const std::string text) {
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (text == root_ui_xp_text_) {
+    return;
+  }
+
+  // Store the value.
+  root_ui_xp_text_ = text;
+
+  // Apply it to any existing UI.
+  if (uiv1_) {
+    if (auto* root_widget = uiv1_->root_widget()) {
+      root_widget->SetXPText(root_ui_xp_text_);
+    }
   }
 }
 

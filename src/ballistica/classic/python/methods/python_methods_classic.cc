@@ -289,6 +289,67 @@ static PyMethodDef PyClassicAppModeDeactivateDef = {
     "(internal)\n",
 };
 
+// -------------------------- set_root_ui_values -------------------------------
+
+static auto PySetRootUIValues(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+
+  const char* tickets_text;
+  const char* tokens_text;
+  const char* league_rank_text;
+  const char* league_type;
+  const char* achievements_percent_text;
+  const char* level_text;
+  const char* xp_text;
+
+  static const char* kwlist[] = {"tickets_text",
+                                 "tokens_text",
+                                 "league_rank_text",
+                                 "league_type",
+                                 "achievements_percent_text",
+                                 "level_text",
+                                 "xp_text",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "sssssss", const_cast<char**>(kwlist), &tickets_text,
+          &tokens_text, &league_rank_text, &league_type,
+          &achievements_percent_text, &level_text, &xp_text)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  auto* appmode = ClassicAppMode::GetActiveOrThrow();
+
+  appmode->SetRootUITicketsMeterText(tickets_text);
+  appmode->SetRootUITokensMeterText(tokens_text);
+  appmode->SetRootUILeagueRankText(league_rank_text);
+  appmode->SetRootUILeagueType(league_type);
+  appmode->SetRootUIAchievementsPercentText(achievements_percent_text);
+  appmode->SetRootUILevelText(level_text);
+  appmode->SetRootUIXPText(xp_text);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetRootUIValuesDef = {
+    "set_root_ui_values",            // name
+    (PyCFunction)PySetRootUIValues,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "set_root_ui_values(tickets_text: str,\n"
+    "      tokens_text: str,\n"
+    "      league_rank_text: str,\n"
+    "      league_type: str,\n"
+    "      achievements_percent_text: str,\n"
+    "      level_text: str,\n"
+    "      xp_text: str,\n"
+    ") -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
@@ -299,6 +360,7 @@ auto PythonMethodsClassic::GetMethods() -> std::vector<PyMethodDef> {
       PyClassicAppModeHandleAppIntentDefaultDef,
       PyClassicAppModeActivateDef,
       PyClassicAppModeDeactivateDef,
+      PySetRootUIValuesDef,
   };
 }
 
